@@ -126,12 +126,9 @@ function recordAttendance(params, type) {
   const { employee_id, name, latitude, longitude, address } = params;
   if (!employee_id) return { success: false, error: '社員IDが必要です' };
 
-  const now       = new Date();
-  const jstOffset = 9 * 60 * 60 * 1000;
-  const jstNow    = new Date(now.getTime() + jstOffset);
-
-  const dateStr = Utilities.formatDate(jstNow, 'Asia/Tokyo', 'yyyy-MM-dd');
-  const timeStr = Utilities.formatDate(jstNow, 'Asia/Tokyo', 'HH:mm:ss');
+  const now = new Date();
+  const dateStr = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd');
+  const timeStr = Utilities.formatDate(now, 'Asia/Tokyo', 'HH:mm:ss');
 
   // 同日同種別の二重打刻チェック（直行・直帰は除く）
   if (type === '出勤' || type === '退勤') {
@@ -147,14 +144,14 @@ function recordAttendance(params, type) {
     latitude || '', longitude || '', address || '']);
 
   // summaryを非同期更新
-  updateSummary(employee_id, name, jstNow);
+  updateSummary(employee_id, name, now);
 
   return {
     success:   true,
     type:      type,
     date:      dateStr,
     time:      timeStr,
-    timestamp: jstNow.toISOString(),
+    timestamp: Utilities.formatDate(now, 'Asia/Tokyo', "yyyy-MM-dd'T'HH:mm:ssXXX"),
   };
 }
 
@@ -178,8 +175,8 @@ function getTodayLog(params) {
   const { employee_id } = params;
   if (!employee_id) return { success: false, error: '社員IDが必要です' };
 
-  const jstNow  = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
-  const dateStr = Utilities.formatDate(jstNow, 'Asia/Tokyo', 'yyyy-MM-dd');
+  const now = new Date();
+  const dateStr = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd');
 
   const sheet = getSheet(SHEET_LOG);
   const data  = sheet.getDataRange().getValues();
@@ -328,8 +325,8 @@ function updateSummary(employee_id, name, refDate) {
 
   const summarySheet = getSheet(SHEET_SUMMARY);
   const summaryData  = summarySheet.getDataRange().getValues();
-  const jstNow       = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
-  const updatedAt    = Utilities.formatDate(jstNow, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
+  const now          = new Date();
+  const updatedAt    = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
 
   let rowIndex = -1;
   for (let i = 1; i < summaryData.length; i++) {
@@ -380,8 +377,8 @@ function getDateString(value) {
 function addEmployee(name, email, department, employee_id) {
   const sheet = getSheet(SHEET_MASTER);
   const id    = Utilities.getUuid();
-  const jstNow = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
-  const created = Utilities.formatDate(jstNow, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
+  const now   = new Date();
+  const created = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
   sheet.appendRow([id, employee_id || id.substring(0, 8), name, email, department || '', created, true]);
   Logger.log('社員追加: ' + name + ' (' + email + ')');
 }
@@ -401,7 +398,7 @@ function recalculateAllSummaries() {
     employees[row[1]] = row[2];
   }
 
-  const now = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+  const now = new Date();
   for (const eid in employees) {
     updateSummary(eid, employees[eid], now);
   }
