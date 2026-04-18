@@ -1078,11 +1078,12 @@ function confirmAction(action) {
 
 function executeAction() {
   if (!pendingAction) return;
+  const actionToExecute = pendingAction;
   closeModalDirect();
   setLoading(true);
 
   const params = {
-    action:      pendingAction,
+    action:      actionToExecute,
     employee_id: currentUser.employee_id,
     name:        currentUser.name,
   };

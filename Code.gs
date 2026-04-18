@@ -162,7 +162,8 @@ function findTodayRecord(employee_id, dateStr, type) {
   const sheet = getSheet(SHEET_LOG);
   const data  = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][1] == employee_id && data[i][3] === dateStr && data[i][4] === type) {
+    const d = getDateString(data[i][3]);
+    if (data[i][1] == employee_id && d === dateStr && data[i][4] === type) {
       return data[i][5]; // 時刻を返す
     }
   }
@@ -185,7 +186,8 @@ function getTodayLog(params) {
   const logs  = [];
 
   for (let i = 1; i < data.length; i++) {
-    if (data[i][1] == employee_id && data[i][3] === dateStr) {
+    const d = getDateString(data[i][3]);
+    if (data[i][1] == employee_id && d === dateStr) {
       logs.push({
         type:      data[i][4],
         time:      data[i][5],
@@ -215,7 +217,7 @@ function getMonthlyLogs(params) {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (row[1] != employee_id) continue;
-    const d = row[3]; // 'yyyy-MM-dd'
+    const d = getDateString(row[3]); // 'yyyy-MM-dd'
     if (!d) continue;
     const parts = d.split('-');
     if (parseInt(parts[0]) !== y || parseInt(parts[1]) !== m) continue;
@@ -273,7 +275,7 @@ function updateSummary(employee_id, name, refDate) {
   for (let i = 1; i < logData.length; i++) {
     const row = logData[i];
     if (row[1] != employee_id) continue;
-    const d = row[3];
+    const d = getDateString(row[3]);
     if (!d) continue;
     const parts = d.split('-');
     if (parseInt(parts[0]) !== year || parseInt(parts[1]) !== month) continue;
@@ -353,9 +355,22 @@ function updateSummary(employee_id, name, refDate) {
 
 function parseTime(timeStr) {
   if (!timeStr) return null;
+  if (timeStr instanceof Date) {
+    timeStr = Utilities.formatDate(timeStr, 'Asia/Tokyo', 'HH:mm:ss');
+  }
   const parts = String(timeStr).split(':');
   if (parts.length < 2) return null;
   return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+function getDateString(value) {
+  if (!value) return '';
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, 'Asia/Tokyo', 'yyyy-MM-dd');
+  }
+  let s = String(value).trim();
+  if (s.includes('/')) s = s.replace(/\//g, '-');
+  return s;
 }
 
 // ============================================================
