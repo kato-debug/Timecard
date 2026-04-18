@@ -1,4 +1,4 @@
-const CACHE_NAME = 'timecard-v1';
+const CACHE_NAME = 'timecard-v2';
 const CACHE_URLS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {
