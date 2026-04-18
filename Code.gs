@@ -2,7 +2,7 @@
 // TimeCard App - Google Apps Script Backend
 // ============================================================
 
-const SPREADSHEET_ID = ''; // ← デプロイ後にスプレッドシートIDを設定
+const SPREADSHEET_ID = '1vfIh9KBWVE-bwwKJuCmoO2t6P8NKPEmTGgQWqwpLIZI'; // ← デプロイ後にスプレッドシートIDを設定
 const SHEET_MASTER   = 'master';
 const SHEET_LOG      = 'log';
 const SHEET_SUMMARY  = 'summary';
