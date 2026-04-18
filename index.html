@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TimeCard">
+  <meta name="theme-color" content="#1a237e">
+  <title>TimeCard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:      #1a237e;
+      --primary-light:#3949ab;
+      --accent:       #ff6f00;
+      --success:      #2e7d32;
+      --danger:       #c62828;
+      --info:         #0277bd;
+      --warning:      #f57f17;
+      --bg:           #f5f5f5;
+      --card:         #ffffff;
+      --text:         #212121;
+      --text-sub:     #757575;
+      --border:       #e0e0e0;
+      --radius:       16px;
+      --shadow:       0 4px 20px rgba(0,0,0,.12);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; min-height: 100vh; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ── Login Screen ── */
+    #loginScreen {
+      background: linear-gradient(145deg, var(--primary) 0%, var(--primary-light) 100%);
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      box-shadow: var(--shadow);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo .icon {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .login-logo h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+    }
+
+    .login-logo p {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      letter-spacing: .5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color .2s;
+      background: #fafafa;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary-light);
+      background: #fff;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: transform .1s, box-shadow .2s;
+      box-shadow: 0 4px 15px rgba(26,35,126,.4);
+    }
+
+    .btn-primary:active { transform: scale(.97); }
+
+    .login-error {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #ffebee;
+      color: var(--danger);
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    /* ── Main Screen ── */
+    #mainScreen {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 16px 20px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,.2);
+    }
+
+    .header-left { display: flex; flex-direction: column; }
+
+    .header-greeting {
+      font-size: 12px;
+      opacity: .8;
+      letter-spacing: .5px;
+    }
+
+    .header-name {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .header-dept {
+      font-size: 11px;
+      opacity: .7;
+      margin-top: 2px;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .btn-logout {
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.4);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-logout:active { background: rgba(255,255,255,.35); }
+
+    /* Clock */
+    .clock-section {
+      background: var(--primary);
+      padding: 20px;
+      padding-top: 0;
+      text-align: center;
+      color: #fff;
+    }
+
+    .clock-time {
+      font-size: 56px;
+      font-weight: 300;
+      letter-spacing: 3px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .clock-date {
+      font-size: 15px;
+      opacity: .8;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* Status Card */
+    .status-card {
+      margin: 16px 16px 0;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 12px;
+    }
+
+    .status-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .status-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .status-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 4px;
+      min-height: 26px;
+    }
+
+    .status-value.recorded {
+      color: var(--success);
+    }
+
+    .status-divider {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+    }
+
+    /* Action Buttons */
+    .action-section {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .action-btn {
+      position: relative;
+      padding: 22px 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .action-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background .15s;
+    }
+
+    .action-btn:active::after { background: rgba(255,255,255,.2); }
+    .action-btn:active { transform: scale(.96); }
+
+    .action-btn.disabled {
+      opacity: .45;
+      pointer-events: none;
+    }
+
+    .action-btn .btn-icon { font-size: 30px; }
+    .action-btn .btn-label { font-size: 15px; }
+    .action-btn .btn-time { font-size: 11px; opacity: .85; font-weight: 400; margin-top: -4px; }
+
+    .btn-clockin  { background: linear-gradient(135deg, #1b5e20, var(--success)); }
+    .btn-clockout { background: linear-gradient(135deg, #b71c1c, var(--danger)); }
+    .btn-direct-start { background: linear-gradient(135deg, #e65100, var(--accent)); }
+    .btn-direct-end   { background: linear-gradient(135deg, #4a148c, #7b1fa2); }
+
+    /* GPS badge */
+    .gps-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,.25);
+      border-radius: 10px;
+      padding: 3px 7px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    /* Summary Card */
+    .summary-section {
+      padding: 0 16px 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    .summary-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-month {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .summary-item {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .summary-item-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+
+    .summary-item-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    .summary-item-unit {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-sub);
+    }
+
+    .summary-item.overtime .summary-item-value { color: var(--accent); }
+    .summary-item.latenight .summary-item-value { color: var(--info); }
+    .summary-item.holiday .summary-item-value { color: var(--danger); }
+
+    /* Location indicator */
+    .location-indicator {
+      margin: 0 16px 12px;
+      padding: 10px 14px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--info);
+      display: none;
+    }
+
+    .location-indicator.active { display: flex; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(33,33,33,.92);
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 500;
+      max-width: calc(100vw - 48px);
+      text-align: center;
+      z-index: 1000;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      backdrop-filter: blur(8px);
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: rgba(46,125,50,.92); }
+    .toast.error   { background: rgba(198,40,40,.92); }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-overlay.active { display: flex; }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Nav tabs */
+    .tab-nav {
+      display: flex;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding-top: 2px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 8px;
+      border: none;
+      background: transparent;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: color .2s;
+    }
+
+    .tab-btn .tab-icon { font-size: 22px; }
+    .tab-btn.active { color: var(--primary); }
+
+    /* Tab panels */
+    .tab-panel { display: none; flex: 1; overflow-y: auto; padding-bottom: 24px; }
+    .tab-panel.active { display: block; }
+
+    /* History list */
+    .history-section { padding: 16px; }
+
+    .history-month-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .month-nav-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--primary);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .history-month-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .history-day-card {
+      background: var(--card);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+
+    .history-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-day-date { font-size: 14px; font-weight: 700; color: var(--text); }
+    .history-day-date.weekend { color: var(--danger); }
+
+    .history-day-hours {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .history-records { padding: 8px 16px 12px; }
+
+    .history-record {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-record:last-child { border-bottom: none; }
+
+    .record-type-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 48px;
+      text-align: center;
+    }
+
+    .badge-clockin    { background: #e8f5e9; color: var(--success); }
+    .badge-clockout   { background: #ffebee; color: var(--danger); }
+    .badge-direct-start { background: #fff3e0; color: var(--accent); }
+    .badge-direct-end   { background: #f3e5f5; color: #7b1fa2; }
+
+    .record-time { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+
+    .record-location {
+      font-size: 11px;
+      color: var(--text-sub);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 120px;
+    }
+
+    /* Confirm modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 998;
+      padding: 0 0 env(safe-area-inset-bottom);
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-sheet {
+      background: var(--card);
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .modal-subtitle { font-size: 14px; color: var(--text-sub); text-align: center; margin-bottom: 20px; }
+
+    .modal-location-info {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .modal-location-info strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+    .modal-buttons { display: flex; gap: 12px; }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 14px;
+      border: 2px solid var(--border);
+      background: transparent;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .btn-confirm {
+      flex: 2;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+
+    .btn-confirm:active { opacity: .85; }
+    .btn-confirm.green  { background: var(--success); }
+    .btn-confirm.red    { background: var(--danger); }
+    .btn-confirm.orange { background: var(--accent); }
+    .btn-confirm.purple { background: #7b1fa2; }
+
+    /* Scrollbar hide */
+    ::-webkit-scrollbar { display: none; }
+    * { scrollbar-width: none; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="loginScreen" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="icon">🕐</span>
+      <h1>TimeCard</h1>
+      <p>勤怠管理システム</p>
+    </div>
+    <div class="form-group">
+      <label>メールアドレス</label>
+      <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email" inputmode="email">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="login()">ログイン</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ==================== MAIN ==================== -->
+<div id="mainScreen" class="screen">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <span class="header-greeting" id="headerGreeting">おはようございます</span>
+      <span class="header-name" id="headerName">---</span>
+      <span class="header-dept" id="headerDept"></span>
+    </div>
+    <div class="header-right">
+      <button class="btn-logout" onclick="confirmLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-home" onclick="switchTab('home')">
+      <span class="tab-icon">🏠</span>打刻
+    </button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
+      <span class="tab-icon">📋</span>履歴
+    </button>
+    <button class="tab-btn" id="tab-summary" onclick="switchTab('summary')">
+      <span class="tab-icon">📊</span>集計
+    </button>
+  </div>
+
+  <!-- ---- TAB: HOME ---- -->
+  <div id="panel-home" class="tab-panel active">
+    <!-- Clock -->
+    <div class="clock-section">
+      <div class="clock-time" id="clockTime">00:00:00</div>
+      <div class="clock-date" id="clockDate">----年--月--日（-）</div>
+    </div>
+
+    <!-- Today Status -->
+    <div class="status-card">
+      <div class="status-item">
+        <div class="status-label">出勤</div>
+        <div class="status-value" id="statusClockIn">--:--</div>
+      </div>
+      <div class="status-divider"></div>
+      <div class="status-item">
+        <div class="status-label">退勤</div>
+        <div class="status-value" id="statusClockOut">--:--</div>
+      </div>
+      <div class="status-divider"></div>
+      <div class="status-item">
+        <div class="status-label">勤務時間</div>
+        <div class="status-value" id="statusWorkHours">--:--</div>
+      </div>
+    </div>
+
+    <!-- Location -->
+    <div class="location-indicator" id="locationIndicator">
+      <span>📍</span>
+      <span id="locationText">現在地取得中...</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-section">
+      <button class="action-btn btn-clockin" id="btnClockIn" onclick="confirmAction('clockIn')">
+        <span class="btn-icon">▶</span>
+        <span class="btn-label">出 勤</span>
+        <span class="btn-time" id="timeClockin"></span>
+      </button>
+      <button class="action-btn btn-clockout" id="btnClockOut" onclick="confirmAction('clockOut')">
+        <span class="btn-icon">■</span>
+        <span class="btn-label">退 勤</span>
+        <span class="btn-time" id="timeClockout"></span>
+      </button>
+      <button class="action-btn btn-direct-start" id="btnDirectStart" onclick="confirmAction('directStart')">
+        <span class="btn-icon">🏃</span>
+        <span class="btn-label">直 行</span>
+        <span class="gps-badge">GPS</span>
+        <span class="btn-time" id="timeDirectStart"></span>
+      </button>
+      <button class="action-btn btn-direct-end" id="btnDirectEnd" onclick="confirmAction('directEnd')">
+        <span class="btn-icon">🏠</span>
+        <span class="btn-label">直 帰</span>
+        <span class="gps-badge">GPS</span>
+        <span class="btn-time" id="timeDirectEnd"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ---- TAB: HISTORY ---- -->
+  <div id="panel-history" class="tab-panel">
+    <div class="history-section">
+      <div class="history-month-selector">
+        <button class="month-nav-btn" onclick="changeHistoryMonth(-1)">◀</button>
+        <span class="history-month-label" id="historyMonthLabel">----年--月</span>
+        <button class="month-nav-btn" onclick="changeHistoryMonth(1)">▶</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- ---- TAB: SUMMARY ---- -->
+  <div id="panel-summary" class="tab-panel">
+    <div class="summary-section" style="padding-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;">
+        <button class="month-nav-btn" onclick="changeSummaryMonth(-1)">◀</button>
+        <span class="history-month-label" id="summaryMonthLabel">----年--月</span>
+        <button class="month-nav-btn" onclick="changeSummaryMonth(1)">▶</button>
+      </div>
+      <div class="summary-card">
+        <div class="summary-month" id="summaryMonthTitle">---- 年 -- 月</div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-item-label">出勤日数</div>
+            <div class="summary-item-value" id="sumWorkDays">0<span class="summary-item-unit">日</span></div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">総勤務時間</div>
+            <div class="summary-item-value" id="sumTotalHours">0<span class="summary-item-unit">h</span></div>
+          </div>
+          <div class="summary-item overtime">
+            <div class="summary-item-label">残業時間</div>
+            <div class="summary-item-value" id="sumOvertime">0<span class="summary-item-unit">h</span></div>
+          </div>
+          <div class="summary-item latenight">
+            <div class="summary-item-label">深夜残業</div>
+            <div class="summary-item-value" id="sumLateNight">0<span class="summary-item-unit">h</span></div>
+          </div>
+          <div class="summary-item holiday" style="grid-column:1/-1;">
+            <div class="summary-item-label">休日出勤</div>
+            <div class="summary-item-value" id="sumHoliday">0<span class="summary-item-unit">h</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL ==================== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal-sheet" id="modalSheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">確認</div>
+    <div class="modal-subtitle" id="modalSubtitle"></div>
+    <div class="modal-location-info" id="modalLocationInfo" style="display:none;">
+      <strong>📍 現在地</strong>
+      <span id="modalLocationText">取得中...</span>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModalDirect()">キャンセル</button>
+      <button class="btn-confirm" id="modalConfirmBtn" onclick="executeAction()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== LOADING ==================== -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script>
+// ── 設定 ──────────────────────────────────────────────
+const GAS_URL = ''; // ← デプロイ後にウェブアプリURLを貼り付ける
+
+// ── State ─────────────────────────────────────────────
+let currentUser   = null;
+let todayLogs     = {};
+let pendingAction = null;
+let currentLocation = null;
+let locationWatcher = null;
+let historyYear   = new Date().getFullYear();
+let historyMonth  = new Date().getMonth() + 1;
+let summaryYear   = new Date().getFullYear();
+let summaryMonth  = new Date().getMonth() + 1;
+
+const DAYS_JA = ['日','月','火','水','木','金','土'];
+const TYPE_LABELS = {
+  '出勤': { label: '出勤', badge: 'badge-clockin' },
+  '退勤': { label: '退勤', badge: 'badge-clockout' },
+  '直行': { label: '直行', badge: 'badge-direct-start' },
+  '直帰': { label: '直帰', badge: 'badge-direct-end' },
+};
+
+// ── Startup ────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = loadUser();
+  if (saved) {
+    currentUser = saved;
+    showMain();
+  } else {
+    showScreen('loginScreen');
+  }
+});
+
+// ── Auth ───────────────────────────────────────────────
+function login() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) { showLoginError('メールアドレスを入力してください'); return; }
+
+  setLoading(true);
+  callAPI({ action: 'authenticate', email })
+    .then(res => {
+      if (res.success) {
+        currentUser = res;
+        saveUser(res);
+        showMain();
+      } else {
+        showLoginError(res.error || '認証に失敗しました');
+      }
+    })
+    .catch(() => showLoginError('通信エラーが発生しました'))
+    .finally(() => setLoading(false));
+}
+
+function confirmLogout() {
+  if (confirm('ログアウトしますか？\n次回起動時にメールアドレスの入力が必要です。')) {
+    logout();
+  }
+}
+
+function logout() {
+  clearUser();
+  currentUser = null;
+  stopLocationWatch();
+  showScreen('loginScreen');
+  document.getElementById('emailInput').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+// ── Main ───────────────────────────────────────────────
+function showMain() {
+  updateGreeting();
+  document.getElementById('headerName').textContent = currentUser.name;
+  document.getElementById('headerDept').textContent = currentUser.department || '';
+  showScreen('mainScreen');
+  startClock();
+  startLocationWatch();
+  loadTodayLog();
+  loadSummary();
+  switchTab('home');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  const el = document.getElementById('headerGreeting');
+  if (h < 5)        el.textContent = 'お疲れさまです';
+  else if (h < 11)  el.textContent = 'おはようございます';
+  else if (h < 18)  el.textContent = 'こんにちは';
+  else              el.textContent = 'お疲れさまです';
+}
+
+// ── Clock ──────────────────────────────────────────────
+function startClock() {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  const ss  = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+
+  const y = now.getFullYear();
+  const mo = now.getMonth() + 1;
+  const d  = now.getDate();
+  const wd = DAYS_JA[now.getDay()];
+  document.getElementById('clockDate').textContent = `${y}年${mo}月${d}日（${wd}）`;
+}
+
+// ── Location ───────────────────────────────────────────
+function startLocationWatch() {
+  if (!navigator.geolocation) return;
+  locationWatcher = navigator.geolocation.watchPosition(
+    pos => {
+      currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      reverseGeocode(currentLocation.lat, currentLocation.lng);
+    },
+    () => { currentLocation = null; },
+    { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
+  );
+}
+
+function stopLocationWatch() {
+  if (locationWatcher !== null) {
+    navigator.geolocation.clearWatch(locationWatcher);
+    locationWatcher = null;
+  }
+}
+
+function reverseGeocode(lat, lng) {
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ja`)
+    .then(r => r.json())
+    .then(data => {
+      const addr = data.address;
+      const parts = [addr.city || addr.town || addr.village, addr.suburb, addr.road].filter(Boolean);
+      currentLocation.address = parts.join(' ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      const ind = document.getElementById('locationIndicator');
+      ind.classList.add('active');
+      document.getElementById('locationText').textContent = currentLocation.address;
+    })
+    .catch(() => {
+      if (currentLocation) currentLocation.address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    });
+}
+
+// ── Today Log ──────────────────────────────────────────
+function loadTodayLog() {
+  if (!currentUser) return;
+  callAPI({ action: 'getTodayLog', employee_id: currentUser.employee_id })
+    .then(res => {
+      if (res.success) {
+        todayLogs = {};
+        res.logs.forEach(l => { todayLogs[l.type] = l; });
+        updateTodayStatus();
+      }
+    })
+    .catch(() => {});
+}
+
+function updateTodayStatus() {
+  const inRecord  = todayLogs['出勤'] || todayLogs['直行'];
+  const outRecord = todayLogs['退勤'] || todayLogs['直帰'];
+
+  const inEl  = document.getElementById('statusClockIn');
+  const outEl = document.getElementById('statusClockOut');
+  const whEl  = document.getElementById('statusWorkHours');
+
+  if (inRecord) {
+    inEl.textContent = inRecord.time.slice(0,5);
+    inEl.classList.add('recorded');
+    document.getElementById('btnClockIn').classList.add('disabled');
+    document.getElementById('btnDirectStart').classList.add('disabled');
+  }
+  if (outRecord) {
+    outEl.textContent = outRecord.time.slice(0,5);
+    outEl.classList.add('recorded');
+    document.getElementById('btnClockOut').classList.add('disabled');
+    document.getElementById('btnDirectEnd').classList.add('disabled');
+  }
+
+  if (inRecord && outRecord) {
+    const [ih, im] = inRecord.time.split(':').map(Number);
+    const [oh, om] = outRecord.time.split(':').map(Number);
+    const worked = (oh * 60 + om) - (ih * 60 + im) - 60;
+    if (worked > 0) {
+      whEl.textContent = `${Math.floor(worked/60)}:${String(worked%60).padStart(2,'0')}`;
+      whEl.classList.add('recorded');
+    }
+  }
+}
+
+// ── Action Buttons ─────────────────────────────────────
+const ACTION_CONFIG = {
+  clockIn:     { title: '出勤を記録', color: 'green',  icon: '▶', needsGPS: false },
+  clockOut:    { title: '退勤を記録', color: 'red',    icon: '■', needsGPS: false },
+  directStart: { title: '直行を記録', color: 'orange', icon: '🏃', needsGPS: true },
+  directEnd:   { title: '直帰を記録', color: 'purple', icon: '🏠', needsGPS: true },
+};
+
+function confirmAction(action) {
+  pendingAction = action;
+  const cfg = ACTION_CONFIG[action];
+  const now = new Date();
+
+  document.getElementById('modalTitle').textContent = cfg.title;
+  document.getElementById('modalSubtitle').textContent =
+    `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} に記録します`;
+
+  const confirmBtn = document.getElementById('modalConfirmBtn');
+  confirmBtn.textContent = '記録する';
+  confirmBtn.className = `btn-confirm ${cfg.color}`;
+
+  const locInfo = document.getElementById('modalLocationInfo');
+  if (cfg.needsGPS) {
+    locInfo.style.display = 'block';
+    const locText = document.getElementById('modalLocationText');
+    if (currentLocation && currentLocation.address) {
+      locText.textContent = currentLocation.address;
+    } else if (currentLocation) {
+      locText.textContent = `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`;
+    } else {
+      locText.textContent = '位置情報を取得できませんでした';
+    }
+  } else {
+    locInfo.style.display = 'none';
+  }
+
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function executeAction() {
+  if (!pendingAction) return;
+  closeModalDirect();
+  setLoading(true);
+
+  const params = {
+    action:      pendingAction,
+    employee_id: currentUser.employee_id,
+    name:        currentUser.name,
+  };
+
+  if (currentLocation) {
+    params.latitude  = currentLocation.lat;
+    params.longitude = currentLocation.lng;
+    params.address   = currentLocation.address || '';
+  }
+
+  callAPI(params)
+    .then(res => {
+      if (res.success) {
+        showToast(`${res.type} ${res.time.slice(0,5)} を記録しました`, 'success');
+        loadTodayLog();
+      } else {
+        showToast(res.error || '記録に失敗しました', 'error');
+      }
+    })
+    .catch(() => showToast('通信エラーが発生しました', 'error'))
+    .finally(() => setLoading(false));
+}
+
+// ── Tab Navigation ─────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+
+  if (tab === 'history') loadHistoryMonth();
+  if (tab === 'summary') loadSummary();
+}
+
+// ── History ────────────────────────────────────────────
+function changeHistoryMonth(delta) {
+  historyMonth += delta;
+  if (historyMonth > 12) { historyMonth = 1;  historyYear++; }
+  if (historyMonth < 1)  { historyMonth = 12; historyYear--; }
+  loadHistoryMonth();
+}
+
+function loadHistoryMonth() {
+  document.getElementById('historyMonthLabel').textContent = `${historyYear}年${historyMonth}月`;
+  setLoading(true);
+  callAPI({ action: 'getMonthlyLogs', employee_id: currentUser.employee_id,
+    year: historyYear, month: historyMonth })
+    .then(res => {
+      if (res.success) renderHistory(res.logs);
+    })
+    .catch(() => {})
+    .finally(() => setLoading(false));
+}
+
+function renderHistory(logs) {
+  const container = document.getElementById('historyList');
+  const sortedDates = Object.keys(logs).sort().reverse();
+
+  if (sortedDates.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-sub);">記録がありません</div>';
+    return;
+  }
+
+  container.innerHTML = sortedDates.map(date => {
+    const parts   = date.split('-');
+    const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    const dayName = DAYS_JA[dateObj.getDay()];
+    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+    const records = logs[date];
+    const inRec  = records.find(r => r.type === '出勤' || r.type === '直行');
+    const outRec = records.find(r => r.type === '退勤' || r.type === '直帰');
+    let hoursStr = '';
+    if (inRec && outRec) {
+      const [ih, im] = inRec.time.split(':').map(Number);
+      const [oh, om] = outRec.time.split(':').map(Number);
+      const worked = (oh*60+om) - (ih*60+im) - 60;
+      if (worked > 0) hoursStr = `${Math.floor(worked/60)}h${worked%60 > 0 ? String(worked%60)+'m' : ''}`;
+    }
+
+    const recordsHTML = records.map(r => {
+      const cfg = TYPE_LABELS[r.type] || { label: r.type, badge: '' };
+      const loc = r.address ? `<span class="record-location">📍${r.address}</span>` : '';
+      return `<div class="history-record">
+        <span class="record-type-badge ${cfg.badge}">${cfg.label}</span>
+        <span class="record-time">${String(r.time).slice(0,5)}</span>
+        ${loc}
+      </div>`;
+    }).join('');
+
+    return `<div class="history-day-card">
+      <div class="history-day-header">
+        <span class="history-day-date${isWeekend ? ' weekend' : ''}">${parts[1]}/${parts[2]}（${dayName}）</span>
+        ${hoursStr ? `<span class="history-day-hours">${hoursStr}</span>` : ''}
+      </div>
+      <div class="history-records">${recordsHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Summary ────────────────────────────────────────────
+function changeSummaryMonth(delta) {
+  summaryMonth += delta;
+  if (summaryMonth > 12) { summaryMonth = 1;  summaryYear++; }
+  if (summaryMonth < 1)  { summaryMonth = 12; summaryYear--; }
+  loadSummary();
+}
+
+function loadSummary() {
+  if (!currentUser) return;
+  document.getElementById('summaryMonthLabel').textContent = `${summaryYear}年${summaryMonth}月`;
+  document.getElementById('summaryMonthTitle').textContent = `${summaryYear}年${summaryMonth}月の集計`;
+
+  callAPI({ action: 'getMonthlySummary', employee_id: currentUser.employee_id,
+    year: summaryYear, month: summaryMonth })
+    .then(res => {
+      if (res.success) {
+        document.getElementById('sumWorkDays').innerHTML =
+          `${res.work_days || 0}<span class="summary-item-unit">日</span>`;
+        document.getElementById('sumTotalHours').innerHTML =
+          `${toHours(res.total_work_minutes)}<span class="summary-item-unit">h</span>`;
+        document.getElementById('sumOvertime').innerHTML =
+          `${toHours(res.overtime_minutes)}<span class="summary-item-unit">h</span>`;
+        document.getElementById('sumLateNight').innerHTML =
+          `${toHours(res.late_night_minutes)}<span class="summary-item-unit">h</span>`;
+        document.getElementById('sumHoliday').innerHTML =
+          `${toHours(res.holiday_minutes)}<span class="summary-item-unit">h</span>`;
+      }
+    })
+    .catch(() => {});
+}
+
+function toHours(min) {
+  if (!min) return '0';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}.${String(Math.round(m/60*10)).padStart(1,'0')}` : String(h);
+}
+
+// ── API ────────────────────────────────────────────────
+function callAPI(params) {
+  if (!GAS_URL) {
+    return Promise.resolve(mockAPI(params));
+  }
+  return fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  }).then(r => r.json());
+}
+
+// デモ用モックAPI（GAS_URL未設定時）
+function mockAPI(params) {
+  console.log('[Mock API]', params);
+  if (params.action === 'authenticate') {
+    const demoEmails = ['demo@example.com', 'test@example.com'];
+    if (demoEmails.includes(params.email.toLowerCase())) {
+      return { success: true, employee_id: 'EMP001', name: 'デモ 太郎', email: params.email, department: '開発部' };
+    }
+    return { success: false, error: 'このメールアドレスは登録されていません（デモ: demo@example.com）' };
+  }
+  if (params.action === 'clockIn' || params.action === 'directStart') {
+    const now = new Date();
+    return { success: true, type: params.action === 'clockIn' ? '出勤' : '直行',
+      date: formatDate(now), time: formatTime(now) };
+  }
+  if (params.action === 'clockOut' || params.action === 'directEnd') {
+    const now = new Date();
+    return { success: true, type: params.action === 'clockOut' ? '退勤' : '直帰',
+      date: formatDate(now), time: formatTime(now) };
+  }
+  if (params.action === 'getTodayLog') {
+    return { success: true, date: formatDate(new Date()), logs: [] };
+  }
+  if (params.action === 'getMonthlySummary') {
+    return { success: true, year: params.year, month: params.month,
+      work_days: 18, total_work_minutes: 9120, overtime_minutes: 480,
+      late_night_minutes: 120, holiday_minutes: 0 };
+  }
+  if (params.action === 'getMonthlyLogs') {
+    return { success: true, year: params.year, month: params.month, logs: {} };
+  }
+  return { success: true };
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatTime(d) {
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+
+// ── Modal ──────────────────────────────────────────────
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  pendingAction = null;
+}
+
+// ── Toast ──────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type}`;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Loading ────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('loadingOverlay').classList.toggle('active', on);
+}
+
+// ── Login Error ────────────────────────────────────────
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── LocalStorage ───────────────────────────────────────
+const STORAGE_KEY = 'timecard_user';
+
+function saveUser(user) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+}
+
+function loadUser() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+}
+
+function clearUser() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+// ── Enter key on login ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('emailInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+});
+</script>
+
+<!-- PWA Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
